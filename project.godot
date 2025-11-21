@@ -15,6 +15,14 @@ run/main_scene="uid://bl7ta0snfyanv"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+NetworkHandler="*res://scripts/network_handler.gd"
+
+[debug_draw_3d]
+
+settings/addon_root_folder="res://addons/debug_draw_3d"
+
 [input]
 
 move_forward={
