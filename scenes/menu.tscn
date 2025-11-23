@@ -1,0 +1,70 @@
+[gd_scene load_steps=2 format=3 uid="uid://bo7ca8ys3udqq"]
+
+[ext_resource type="Script" path="res://scenes/menu.gd" id="1_menu"]
+
+[node name="Menu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Multiplayer Game"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="IPContainer" type="HBoxContainer" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="IPLabel" type="Label" parent="CenterContainer/VBoxContainer/IPContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Server IP:"
+
+[node name="IPInput" type="LineEdit" parent="CenterContainer/VBoxContainer/IPContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "localhost"
+placeholder_text = "localhost"
+
+[node name="Server" type="Button" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Start Server"
+
+[node name="Client" type="Button" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Connect as Client"
+
+[node name="StatusLabel" type="Label" parent="CenterContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = " "
+horizontal_alignment = 1
+
+[connection signal="pressed" from="CenterContainer/VBoxContainer/Server" to="." method="_on_server_pressed"]
+[connection signal="pressed" from="CenterContainer/VBoxContainer/Client" to="." method="_on_client_pressed"]

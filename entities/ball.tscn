@@ -1,0 +1,42 @@
+[gd_scene load_steps=7 format=3 uid="uid://dxql0gej4kdss"]
+
+[ext_resource type="Script" path="res://scripts/synced_rigidbody.gd" id="1_sync"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_skf5x"]
+bounce = 0.62
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_skf5x"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yheed"]
+albedo_color = Color(0.7060001, 1, 0.16000003, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_lc4u2"]
+material = SubResource("StandardMaterial3D_yheed")
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_ball"]
+properties/0/path = NodePath(".:sync_position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:sync_rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath(".:sync_linear_velocity")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+properties/3/path = NodePath(".:sync_angular_velocity")
+properties/3/spawn = true
+properties/3/replication_mode = 1
+
+[node name="Ball" type="RigidBody3D"]
+mass = 2.0
+physics_material_override = SubResource("PhysicsMaterial_skf5x")
+script = ExtResource("1_sync")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_skf5x")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_lc4u2")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_ball")

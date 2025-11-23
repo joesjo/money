@@ -15,6 +15,10 @@ run/main_scene="uid://bl7ta0snfyanv"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+NetworkManager="*res://scripts/network_manager.gd"
+
 [input]
 
 move_forward={

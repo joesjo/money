@@ -34,19 +34,35 @@ var t_bob: float = 0.0
 var hand_local_position: Vector3 = Vector3.ZERO
 var hand_target_position: Vector3 = Vector3.ZERO
 
-var grabbed_object: RigidBody3D = null
+# Synced Variables
+var grabbed_object_path: NodePath = NodePath("")
 var grabbed_object_local_position: Vector3 = Vector3.ZERO
+
+# Local Reference
+var grabbed_object: RigidBody3D = null
 var time_since_last_grab: float = 0.0
 
 
+func _enter_tree():
+	set_multiplayer_authority(str(name).to_int())
+	$InputSynchronizer.set_multiplayer_authority(str(name).to_int())
+	$ServerSynchronizer.set_multiplayer_authority(1)
+
+
 func _ready() -> void:
-	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+	if is_multiplayer_authority():
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+		camera.current = true
+	
 	camera_height = camera.position.y
 	hand_local_position = hand.position
 	hand_target_position = hand_local_position
 
 
 func _input(event: InputEvent) -> void:
+	if not is_multiplayer_authority():
+		return
+		
 	if event is InputEventMouseMotion:
 		_handle_mouse_motion(event)
 	
@@ -56,29 +72,65 @@ func _input(event: InputEvent) -> void:
 		_handle_release_input()
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_resolve_grabbed_object()
+	
 	if grabbed_object:
+		# Visual update for hand target
 		hand_target_position = to_local(grabbed_object.to_global(grabbed_object_local_position))
+	
+	_update_hand_position(delta)
 
 
 func _physics_process(delta: float) -> void:
+	_resolve_grabbed_object()
+	
+	# Gravity (Always apply)
 	_apply_gravity(delta)
-	_handle_jump()
+	
+	# Movement (Only Authority)
+	if is_multiplayer_authority():
+		_handle_jump()
+		
+		var speed = _get_movement_speed()
+		var target_fov = _get_target_fov()
+		var direction = _get_movement_direction()
+		
+		_apply_movement(direction, speed, delta)
+		_apply_headbob(delta)
+		_update_camera_fov(target_fov, delta)
+		
+		# Apply reaction force locally if we are holding something
+		if grabbed_object:
+			_apply_reaction_force()
+		
+		move_and_slide()
+	
+	# Grabbing Physics (Only Server)
+	if multiplayer.is_server():
+		_update_grab_physics()
+	
 	_update_grab_timer(delta)
-	
-	var speed = _get_movement_speed()
-	var target_fov = _get_target_fov()
-	var direction = _get_movement_direction()
-	
-	_apply_movement(direction, speed, delta)
-	_apply_headbob(delta)
-	_update_camera_fov(target_fov, delta)
-	_update_grab_physics()
-	
-	move_and_slide()
-	
-	_update_hand_position(delta)
 	_apply_collision_forces()
+
+
+func _resolve_grabbed_object() -> void:
+	if grabbed_object_path.is_empty():
+		if grabbed_object:
+			# Client detected release via sync
+			grabbed_object = null
+			hand_target_position = hand_local_position
+			time_since_last_grab = 0.0
+		return
+		
+	if grabbed_object and grabbed_object.get_path() == grabbed_object_path:
+		return
+		
+	var node = get_node_or_null(grabbed_object_path)
+	if node is RigidBody3D:
+		grabbed_object = node
+	else:
+		grabbed_object = null
 
 
 func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
@@ -89,12 +141,25 @@ func _handle_mouse_motion(event: InputEventMouseMotion) -> void:
 
 func _handle_grab_input() -> void:
 	if grabbed_object == null:
-		_try_grab()
+		request_grab.rpc_id(1)
 
 
 func _handle_release_input() -> void:
-	if grabbed_object != null:
-		_release_grab()
+	request_release.rpc_id(1)
+
+
+@rpc("call_local")
+func request_grab():
+	if not multiplayer.is_server():
+		return
+	_try_grab()
+
+
+@rpc("call_local")
+func request_release():
+	if not multiplayer.is_server():
+		return
+	_release_grab()
 
 
 func _apply_gravity(delta: float) -> void:
@@ -190,6 +255,21 @@ func _grab_update() -> void:
 	var force_offset = from_position - grabbed_object.global_position
 	
 	grabbed_object.apply_force(force, force_offset)
+
+
+func _apply_reaction_force() -> void:
+	# Calculate the force that WOULD be applied to the object, and apply the opposite to player
+	# This runs on Client (Authority)
+	
+	var target_position = camera.global_position + camera.global_transform.basis.z * -GRAB_OFFSET
+	var from_position = grabbed_object.to_global(grabbed_object_local_position)
+	var displacement = target_position - from_position
+	
+	# We don't have access to object's linear velocity perfectly synced, but we can approximate or ignore damping for reaction
+	# Or we can use the visual displacement
+	
+	var force = displacement * GRAB_STIFFNESS
+	# Ignore damping for reaction force to keep it simple and stable on client
 	
 	var stretch_distance = displacement.length()
 	if stretch_distance > MAX_GRAB_STRETCH:
@@ -198,7 +278,7 @@ func _grab_update() -> void:
 		
 		if not is_on_floor():
 			reaction_acceleration *= 0.1
-		
+			
 		velocity += reaction_acceleration
 
 
@@ -217,14 +297,15 @@ func _try_grab() -> void:
 	if not result.collider is RigidBody3D:
 		return
 	
-	print(result)
-	
+	# Set synced variables
 	grabbed_object = result.collider
+	grabbed_object_path = grabbed_object.get_path()
 	grabbed_object_local_position = grabbed_object.to_local(result.position)
 
 
 func _release_grab() -> void:
 	grabbed_object = null
+	grabbed_object_path = NodePath("")
 	grabbed_object_local_position = Vector3.ZERO
 	hand_target_position = hand_local_position
 	time_since_last_grab = 0.0

@@ -19,6 +19,25 @@ height = 0.2
 radial_segments = 16
 rings = 8
 
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_player"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath("Camera3D:rotation")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+
+[sub_resource type="SceneReplicationConfig" id="SceneReplicationConfig_server"]
+properties/0/path = NodePath(".:grabbed_object_path")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:grabbed_object_local_position")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1_merdl")
 
@@ -51,3 +70,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.4, 1.1, -0.4)
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Hand"]
 mesh = SubResource("SphereMesh_e4p34")
+
+[node name="InputSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_player")
+
+[node name="ServerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("SceneReplicationConfig_server")
