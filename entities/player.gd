@@ -21,6 +21,8 @@ const GRAB_DAMPING = 6.0
 const GRAB_FORCE_MULTIPLIER = 10.0
 const GRAB_VISUAL_SPEED = 20.0
 const MAX_GRAB_STRETCH = 0.1
+const LEASH_DISTANCE = 2.0
+const LEASH_STIFFNESS = 5.0
 const PLAYER_MASS = 80.0
 
 @export var mouse_sensitivity: float = 2.0
@@ -281,20 +283,17 @@ func _apply_reaction_force() -> void:
 	# Calculate the force that WOULD be applied to the object, and apply the opposite to player
 	# This runs on Client (Authority)
 	
-	var target_position = camera.global_position + camera.global_transform.basis.z * -GRAB_OFFSET
+	# Leash Logic: Only pull the player if they are too far from the object
+	# This decouples the "lifting" force (spring) from the "restraint" force (leash)
+	
 	var from_position = grabbed_object.to_global(grabbed_object_local_position)
-	var displacement = target_position - from_position
+	var distance_to_object = camera.global_position.distance_to(from_position)
 	
-	# We don't have access to object's linear velocity perfectly synced, but we can approximate or ignore damping for reaction
-	# Or we can use the visual displacement
-	
-	var force = displacement * GRAB_STIFFNESS
-	# Ignore damping for reaction force to keep it simple and stable on client
-	
-	var stretch_distance = displacement.length()
-	if stretch_distance > MAX_GRAB_STRETCH:
-		var stretch_amount = stretch_distance - MAX_GRAB_STRETCH
-		var reaction_acceleration = (-force / PLAYER_MASS) * pow(stretch_amount, 2)
+	if distance_to_object > LEASH_DISTANCE:
+		var excess_distance = distance_to_object - LEASH_DISTANCE
+		var direction_to_object = (from_position - camera.global_position).normalized()
+		
+		var reaction_acceleration = direction_to_object * excess_distance * LEASH_STIFFNESS
 		
 		if not is_on_floor():
 			reaction_acceleration *= 0.1
