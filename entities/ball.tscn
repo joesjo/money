@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://dxql0gej4kdss"]
 
-[ext_resource type="Script" path="res://scripts/synced_rigidbody.gd" id="1_sync"]
+[ext_resource type="Script" uid="uid://dlby4ldykuo34" path="res://scripts/synced_rigidbody.gd" id="1_sync"]
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_skf5x"]
 bounce = 0.62

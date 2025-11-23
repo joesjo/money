@@ -1,7 +1,8 @@
-[gd_scene load_steps=10 format=3 uid="uid://bl7ta0snfyanv"]
+[gd_scene load_steps=11 format=3 uid="uid://bl7ta0snfyanv"]
 
 [ext_resource type="Script" uid="uid://gmwy61ipsiet" path="res://scripts/game_manager.gd" id="1_0wfyh"]
 [ext_resource type="PackedScene" uid="uid://bt7qupedqw7rl" path="res://entities/box.tscn" id="2_0wfyh"]
+[ext_resource type="PackedScene" uid="uid://dxql0gej4kdss" path="res://entities/ball.tscn" id="3_sugp2"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_o5qli"]
 sky_top_color = Color(0.20392157, 0.5803922, 0.8745098, 1)
@@ -66,7 +67,7 @@ material = SubResource("StandardMaterial3D_jyhfs")
 
 [node name="Box" parent="." instance=ExtResource("2_0wfyh")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5747695, 0.50000095, -0.07658601)
-mass = 1.0
+mass = 10.0
 
 [node name="CSGBox3D5" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.53806615, -1.281136)
@@ -83,3 +84,6 @@ size = Vector3(0.1, 2, 2)
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
 _spawnable_scenes = PackedStringArray("uid://bvuip66w4k1ux")
 spawn_path = NodePath("../Players")
+
+[node name="Ball" parent="." instance=ExtResource("3_sugp2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.792769, 0.49999952, 5.9292774)
