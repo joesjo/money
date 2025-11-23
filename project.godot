@@ -11,13 +11,18 @@ config_version=5
 [application]
 
 config/name="money"
-run/main_scene="uid://bl7ta0snfyanv"
+run/main_scene="uid://dbt8kdh3oqwj0"
 config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
+NetworkHandler="*res://scripts/network_handler.gd"
 NetworkManager="*res://scripts/network_manager.gd"
+
+[debug_draw_3d]
+
+settings/addon_root_folder="res://addons/debug_draw_3d"
 
 [input]
 

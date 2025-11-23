@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://bt7qupedqw7rl"]
+[gd_scene load_steps=5 format=3 uid="uid://bt7qupedqw7rl"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_nsk64"]
 
@@ -27,3 +27,4 @@ mesh = SubResource("BoxMesh_ls4fa")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("SceneReplicationConfig_box")
+visibility_update_mode = 1

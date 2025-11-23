@@ -67,9 +67,10 @@ func _input(event: InputEvent) -> void:
 		_handle_mouse_motion(event)
 	
 	if event.is_action_pressed("grab"):
-		_handle_grab_input()
-	elif event.is_action_released("grab"):
-		_handle_release_input()
+		if grabbed_object:
+			_handle_release_input()
+		else:
+			_handle_grab_input()
 
 
 func _process(delta: float) -> void:
