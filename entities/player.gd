@@ -107,9 +107,10 @@ func _physics_process(delta: float) -> void:
 		
 		move_and_slide()
 	
-	# Grabbing Physics (Only Server)
-	if multiplayer.is_server():
-		_update_grab_physics()
+	# Grabbing Physics (Run if we are the authority of the object)
+	if grabbed_object:
+		if grabbed_object.is_multiplayer_authority():
+			_update_grab_physics()
 	
 	_update_grab_timer(delta)
 	_apply_collision_forces()
@@ -161,6 +162,24 @@ func request_release():
 	if not multiplayer.is_server():
 		return
 	_release_grab()
+
+
+@rpc("any_peer", "call_local", "reliable")
+func set_grabbed_object_authority(obj_path: NodePath, authority_id: int):
+	# Security: Only allow the Server (1) to set authority on the Client
+	# Exception: The Server calls this on itself (sender_id 0 or 1)
+	var sender = multiplayer.get_remote_sender_id()
+	if sender != 1 and sender != 0:
+		return
+		
+	var node = get_node_or_null(obj_path)
+	if node and node is RigidBody3D:
+		node.set_multiplayer_authority(authority_id)
+		
+		# Also update the MultiplayerSynchronizer if it exists
+		var synchronizer = node.get_node_or_null("MultiplayerSynchronizer")
+		if synchronizer:
+			synchronizer.set_multiplayer_authority(authority_id)
 
 
 func _apply_gravity(delta: float) -> void:
@@ -302,9 +321,21 @@ func _try_grab() -> void:
 	grabbed_object = result.collider
 	grabbed_object_path = grabbed_object.get_path()
 	grabbed_object_local_position = grabbed_object.to_local(result.position)
+	
+	# Smart Authority Transfer: Only transfer if Server currently owns it
+	var current_auth = grabbed_object.get_multiplayer_authority()
+	
+	if current_auth == 1:
+		var sender_id = multiplayer.get_remote_sender_id()
+		set_grabbed_object_authority.rpc(grabbed_object_path, sender_id)
 
 
 func _release_grab() -> void:
+	if grabbed_object:
+		# Smart Authority Return: Only return if WE (the releaser) own it
+		if grabbed_object.get_multiplayer_authority() == multiplayer.get_remote_sender_id():
+			set_grabbed_object_authority.rpc(grabbed_object_path, 1)
+			
 	grabbed_object = null
 	grabbed_object_path = NodePath("")
 	grabbed_object_local_position = Vector3.ZERO
